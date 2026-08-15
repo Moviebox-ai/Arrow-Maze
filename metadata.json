@@ -1,0 +1,6 @@
+{
+  "name": "Arrow Maze 3D",
+  "description": "Dungeon stone Arrow Puzzle Escape game with carved directional arrow tiles, torches, and exit door puzzles.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

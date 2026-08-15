@@ -1,0 +1,30 @@
+{
+  "id": "w01_l001",
+  "worldIndex": 1,
+  "levelIndex": 1,
+  "name": "First Vectors",
+  "difficulty": 1,
+  "theme": "DIRECTIONAL_TEMPLE",
+  "sizeX": 7,
+  "sizeY": 1,
+  "sizeZ": 7,
+  "threeStarMoves": 6,
+  "twoStarMoves": 10,
+  "maxAllowedMoves": 20,
+  "playerSpawn": { "x": 1, "y": 0, "z": 1, "dir": "NORTH" },
+  "goalLocation": { "x": 5, "y": 0, "z": 5 },
+  "objects": [
+    {
+      "id": "arrow_1",
+      "type": "ROTATABLE_ARROW",
+      "x": 1, "y": 0, "z": 3,
+      "direction": "EAST"
+    },
+    {
+      "id": "arrow_2",
+      "type": "ARROW",
+      "x": 3, "y": 0, "z": 3,
+      "direction": "NORTH"
+    }
+  ]
+}
