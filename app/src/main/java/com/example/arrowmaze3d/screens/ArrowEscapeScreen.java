@@ -239,6 +239,8 @@ public class ArrowEscapeScreen extends BaseScreen {
 
         // Check Exit Door reached
         if (playerX == levelData.exitX && playerY == levelData.exitY) {
+            game.getAudio().playExitDoor();
+            game.getAudio().triggerHaptic();
             triggerWin();
         }
     }

@@ -14,6 +14,7 @@ public class AudioManager {
     private Sound triggerSound;
     private Sound victorySound;
     private Sound teleportSound;
+    private Sound exitDoorSound;
 
     public AudioManager(GameSettings settings) {
         this.settings = settings;
@@ -28,12 +29,14 @@ public class AudioManager {
             byte[] triggerPcm = generateTonePcm(880, 0.12f); // 880 Hz trigger
             byte[] victoryPcm = generateArpeggioPcm(new float[]{523.25f, 659.25f, 783.99f, 1046.50f}, 0.12f); // C Major chord
             byte[] teleportPcm = generateTonePcm(330, 0.18f);
+            byte[] exitDoorPcm = generateArpeggioPcm(new float[]{440.00f, 554.37f, 659.25f, 880.00f, 1108.73f}, 0.09f); // A Major ascending fanfare
 
             stepSound = Gdx.audio.newSound(createSoundFile(stepPcm, 22050));
             rotateSound = Gdx.audio.newSound(createSoundFile(rotatePcm, 22050));
             triggerSound = Gdx.audio.newSound(createSoundFile(triggerPcm, 22050));
             victorySound = Gdx.audio.newSound(createSoundFile(victoryPcm, 22050));
             teleportSound = Gdx.audio.newSound(createSoundFile(teleportPcm, 22050));
+            exitDoorSound = Gdx.audio.newSound(createSoundFile(exitDoorPcm, 22050));
         } catch (Exception e) {
             AppLogger.e("Failed to create procedural audio", e);
         }
@@ -60,6 +63,12 @@ public class AudioManager {
     public void playVictory() {
         if (settings.isSoundEnabled() && victorySound != null) {
             victorySound.play(settings.getSfxVolume());
+        }
+    }
+
+    public void playExitDoor() {
+        if (settings.isSoundEnabled() && exitDoorSound != null) {
+            exitDoorSound.play(settings.getSfxVolume());
         }
     }
 
@@ -161,5 +170,6 @@ public class AudioManager {
         if (triggerSound != null) triggerSound.dispose();
         if (victorySound != null) victorySound.dispose();
         if (teleportSound != null) teleportSound.dispose();
+        if (exitDoorSound != null) exitDoorSound.dispose();
     }
 }

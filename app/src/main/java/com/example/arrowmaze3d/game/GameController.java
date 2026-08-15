@@ -418,6 +418,7 @@ public class GameController {
         this.gameState = GameState.COMPLETED;
         playerController.setState(PlayerState.WON);
         coinsBalance += 100;
+        audioManager.playExitDoor();
         audioManager.playVictory();
         audioManager.triggerHaptic();
     }
