@@ -21,14 +21,17 @@ public class CustomSkinFactory {
         BitmapFont font = new BitmapFont(); // Default LibGDX font
         font.getData().setScale(2.2f);
         skin.add("default-font", font);
+        skin.add("default", font);
 
         BitmapFont titleFont = new BitmapFont();
         titleFont.getData().setScale(3.5f);
         skin.add("title-font", titleFont);
+        skin.add("title", titleFont);
 
         BitmapFont smallFont = new BitmapFont();
         smallFont.getData().setScale(1.6f);
         skin.add("small-font", smallFont);
+        skin.add("small", smallFont);
 
         // 2. Color Palette
         Color primary = new Color(0x3A / 255f, 0x86 / 255f, 0xFF / 255f, 1f); // Electric Blue

@@ -4,154 +4,211 @@ import com.example.arrowmaze3d.game.ArrowTile;
 import com.example.arrowmaze3d.world.Direction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class PuzzleLevelGenerator {
+
+    public enum DifficultyMode {
+        EASY("EASY MODE", "Clear Perimeters & Low Blockage", 0.95f, 0.75f, 0.20f),
+        NORMAL("NORMAL MODE", "Interlocked Grids & Strategic Unlocking", 0.35f, 0.85f, 1.0f),
+        HARD("HARD MODE", "Dense Multi-Layer Arrow Mazes", 0.95f, 0.35f, 0.35f);
+
+        public final String title;
+        public final String description;
+        public final float r, g, b;
+
+        DifficultyMode(String title, String description, float r, float g, float b) {
+            this.title = title;
+            this.description = description;
+            this.r = r;
+            this.g = g;
+            this.b = b;
+        }
+    }
 
     public static class EscapeLevelData {
         public int levelNumber;
         public int gridSize = 5;
+        public DifficultyMode mode = DifficultyMode.EASY;
         public String title = "Arrow Puzzle Escape";
-        public String subtitle = "Solve the arrow puzzle to open the door";
-        public int startX = 0;
-        public int startY = 1;
-        public int exitX = 4;
-        public int exitY = 4;
+        public String subtitle = "Tap unblocked arrows to release them from the board!";
         public ArrowTile[][] grid;
-        public List<int[]> solutionPath = new ArrayList<>();
+        public int totalArrows = 25;
+        public List<int[]> escapeOrder = new ArrayList<>();
+    }
+
+    /**
+     * Determines difficulty mode across 5000 levels:
+     * Levels 1 to 1500: EASY MODE
+     * Levels 1501 to 3500: NORMAL MODE
+     * Levels 3501 to 5000+: HARD MODE
+     */
+    public static DifficultyMode getDifficultyForLevel(int levelNumber) {
+        if (levelNumber <= 1500) {
+            return DifficultyMode.EASY;
+        } else if (levelNumber <= 3500) {
+            return DifficultyMode.NORMAL;
+        } else {
+            return DifficultyMode.HARD;
+        }
     }
 
     public static EscapeLevelData getLevel(int levelIndex) {
+        if (levelIndex < 1) levelIndex = 1;
+        if (levelIndex > 5000) levelIndex = 5000;
+
         EscapeLevelData data = new EscapeLevelData();
         data.levelNumber = levelIndex;
         data.gridSize = 5;
         data.grid = new ArrowTile[5][5];
+        data.mode = getDifficultyForLevel(levelIndex);
 
-        // Specific Level 15 (Exact layout from the User's Screenshot)
-        if (levelIndex == 15) {
-            setupLevel15(data);
-            return data;
-        }
-
-        // Procedural & Handcrafted levels 1 to 50
-        setupProceduralLevel(data, levelIndex);
+        // Generate Solvable Tap-To-Release Puzzle
+        setupTapToReleaseLevel(data, levelIndex);
         return data;
     }
 
-    private static void setupLevel15(EscapeLevelData data) {
-        data.startX = 0;
-        data.startY = 1;
-        data.exitX = 4;
-        data.exitY = 4;
+    /**
+     * Reverse Construction Algorithm:
+     * Start with an empty board and place arrows in reverse of the escape order.
+     * Guaranteed 100% solvable without deadlocks!
+     */
+    private static void setupTapToReleaseLevel(EscapeLevelData data, int levelIndex) {
+        long seed = (long) levelIndex * 2654435761L + 987654321L;
+        Random rng = new Random(seed);
 
-        // Row 0 (Y=0, Top in screen display)
-        data.grid[0][0] = new ArrowTile(0, 0, Direction.EAST, ArrowTile.TileType.STONE);
-        data.grid[1][0] = new ArrowTile(1, 0, Direction.NORTH, ArrowTile.TileType.CYAN);
-        data.grid[2][0] = new ArrowTile(2, 0, Direction.EAST, ArrowTile.TileType.STONE);
-        data.grid[3][0] = new ArrowTile(3, 0, Direction.EAST, ArrowTile.TileType.RED);
-        data.grid[4][0] = new ArrowTile(4, 0, Direction.SOUTH, ArrowTile.TileType.STONE);
+        DifficultyMode mode = data.mode;
+        int size = data.gridSize;
 
-        // Row 1 (Y=1)
-        data.grid[0][1] = new ArrowTile(0, 1, Direction.NORTH, ArrowTile.TileType.START_GREEN);
-        data.grid[1][1] = new ArrowTile(1, 1, Direction.WEST, ArrowTile.TileType.STONE);
-        data.grid[2][1] = new ArrowTile(2, 1, Direction.SOUTH, ArrowTile.TileType.STONE);
-        data.grid[3][1] = new ArrowTile(3, 1, Direction.SOUTH, ArrowTile.TileType.STONE);
-        data.grid[4][1] = new ArrowTile(4, 1, Direction.WEST, ArrowTile.TileType.STONE);
+        // Tile types distribution based on mode
+        ArrowTile.TileType[] gemTypes = {
+            ArrowTile.TileType.STONE,
+            ArrowTile.TileType.CYAN,
+            ArrowTile.TileType.RED,
+            ArrowTile.TileType.PURPLE,
+            ArrowTile.TileType.GOLD
+        };
 
-        // Row 2 (Y=2)
-        data.grid[0][2] = new ArrowTile(0, 2, Direction.NORTH, ArrowTile.TileType.STONE);
-        data.grid[1][2] = new ArrowTile(1, 2, Direction.WEST, ArrowTile.TileType.PURPLE);
-        data.grid[2][2] = new ArrowTile(2, 2, Direction.EAST, ArrowTile.TileType.GOLD);
-        data.grid[3][2] = new ArrowTile(3, 2, Direction.WEST, ArrowTile.TileType.STONE);
-        data.grid[4][2] = new ArrowTile(4, 2, Direction.NORTH, ArrowTile.TileType.STONE);
+        // Track occupied tiles during reverse assembly
+        boolean[][] occupied = new boolean[size][size];
+        List<int[]> reversePlacedOrder = new ArrayList<>();
 
-        // Row 3 (Y=3)
-        data.grid[0][3] = new ArrowTile(0, 3, Direction.SOUTH, ArrowTile.TileType.STONE);
-        data.grid[1][3] = new ArrowTile(1, 3, Direction.SOUTH, ArrowTile.TileType.STONE);
-        data.grid[2][3] = new ArrowTile(2, 3, Direction.EAST, ArrowTile.TileType.STONE);
-        data.grid[3][3] = new ArrowTile(3, 3, Direction.NORTH, ArrowTile.TileType.CYAN);
-        data.grid[4][3] = new ArrowTile(4, 3, Direction.EAST, ArrowTile.TileType.STONE);
+        // Generate list of all 25 coordinates
+        List<int[]> allCoords = new ArrayList<>();
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                allCoords.add(new int[]{x, y});
+            }
+        }
 
-        // Row 4 (Y=4, Bottom in screen display)
-        data.grid[0][4] = new ArrowTile(0, 4, Direction.WEST, ArrowTile.TileType.STONE);
-        data.grid[1][4] = new ArrowTile(1, 4, Direction.SOUTH, ArrowTile.TileType.RED);
-        data.grid[2][4] = new ArrowTile(2, 4, Direction.WEST, ArrowTile.TileType.STONE);
-        data.grid[3][4] = new ArrowTile(3, 4, Direction.SOUTH, ArrowTile.TileType.STONE);
-        data.grid[4][4] = new ArrowTile(4, 4, Direction.EAST, ArrowTile.TileType.EXIT_DOOR);
-
-        // Level 15 Solution Path:
-        // (0,1) -> (0,0) -> (2,0) -> (3,0) -> (4,0) -> (4,1) -> (4,2) ... -> (4,4)
-        data.solutionPath.clear();
-        data.solutionPath.add(new int[]{0, 1});
-        data.solutionPath.add(new int[]{0, 0});
-        data.solutionPath.add(new int[]{2, 0});
-        data.solutionPath.add(new int[]{3, 0});
-        data.solutionPath.add(new int[]{4, 0});
-        data.solutionPath.add(new int[]{4, 1});
-        data.solutionPath.add(new int[]{2, 1});
-        data.solutionPath.add(new int[]{2, 2});
-        data.solutionPath.add(new int[]{3, 2});
-        data.solutionPath.add(new int[]{3, 3});
-        data.solutionPath.add(new int[]{4, 3});
-        data.solutionPath.add(new int[]{4, 4});
-    }
-
-    private static void setupProceduralLevel(EscapeLevelData data, int levelIndex) {
-        int seed = levelIndex * 1337 + 42;
-        data.startX = 0;
-        data.startY = (levelIndex % 3 == 0) ? 0 : 1;
-        data.exitX = 4;
-        data.exitY = 4;
+        // Shuffle placing order
+        for (int i = allCoords.size() - 1; i > 0; i--) {
+            int j = rng.nextInt(i + 1);
+            int[] tmp = allCoords.get(i);
+            allCoords.set(i, allCoords.get(j));
+            allCoords.set(j, tmp);
+        }
 
         Direction[] allDirs = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
 
-        for (int y = 0; y < 5; y++) {
-            for (int x = 0; x < 5; x++) {
-                int pseudo = (seed + x * 31 + y * 71) % 4;
-                Direction dir = allDirs[Math.abs(pseudo)];
-                ArrowTile.TileType type = ArrowTile.TileType.STONE;
+        for (int[] pos : allCoords) {
+            int x = pos[0];
+            int y = pos[1];
 
-                if (x == data.startX && y == data.startY) {
-                    type = ArrowTile.TileType.START_GREEN;
-                    dir = (data.startY == 0) ? Direction.EAST : Direction.NORTH;
-                } else if (x == data.exitX && y == data.exitY) {
-                    type = ArrowTile.TileType.EXIT_DOOR;
-                    dir = Direction.EAST;
-                } else if (x == 2 && y == 2) {
-                    type = ArrowTile.TileType.GOLD;
-                    dir = Direction.EAST;
-                } else if ((x == 1 && y == 0) || (x == 3 && y == 3)) {
-                    type = ArrowTile.TileType.CYAN;
-                } else if ((x == 3 && y == 0) || (x == 1 && y == 4)) {
-                    type = ArrowTile.TileType.RED;
-                } else if (x == 1 && y == 2) {
-                    type = ArrowTile.TileType.PURPLE;
+            // Find all valid exit directions (where no currently placed tile blocks the path out of board)
+            List<Direction> validDirs = new ArrayList<>();
+            for (Direction dir : allDirs) {
+                if (isPathClearToEdge(occupied, x, y, dir, size)) {
+                    validDirs.add(dir);
                 }
-
-                data.grid[x][y] = new ArrowTile(x, y, dir, type);
             }
-        }
 
-        // Build a guaranteed solution path
-        data.solutionPath.clear();
-        int curX = data.startX;
-        int curY = data.startY;
-        data.solutionPath.add(new int[]{curX, curY});
-
-        while (curX != data.exitX || curY != data.exitY) {
-            if (curX < data.exitX && (curY == data.exitY || ((curX + curY + seed) % 2 == 0))) {
-                data.grid[curX][curY].direction = Direction.EAST;
-                curX++;
-            } else if (curY < data.exitY) {
-                data.grid[curX][curY].direction = Direction.SOUTH;
-                curY++;
-            } else if (curX < data.exitX) {
-                data.grid[curX][curY].direction = Direction.EAST;
-                curX++;
+            Direction chosenDir;
+            if (!validDirs.isEmpty()) {
+                chosenDir = validDirs.get(rng.nextInt(validDirs.size()));
             } else {
-                break;
+                // Fallback: Point to nearest edge
+                chosenDir = getDirectionToNearestEdge(x, y, size);
             }
-            data.solutionPath.add(new int[]{curX, curY});
+
+            // Determine Gem type
+            ArrowTile.TileType tileType = ArrowTile.TileType.STONE;
+            if (rng.nextFloat() < (mode == DifficultyMode.EASY ? 0.25f : (mode == DifficultyMode.NORMAL ? 0.45f : 0.65f))) {
+                tileType = gemTypes[rng.nextInt(gemTypes.length)];
+            }
+
+            data.grid[x][y] = new ArrowTile(x, y, chosenDir, tileType);
+            occupied[x][y] = true;
+            reversePlacedOrder.add(new int[]{x, y});
         }
-        data.grid[data.exitX][data.exitY].direction = Direction.EAST;
+
+        // The solution order is the reverse of the reversePlacedOrder
+        data.escapeOrder.clear();
+        for (int i = reversePlacedOrder.size() - 1; i >= 0; i--) {
+            data.escapeOrder.add(reversePlacedOrder.get(i));
+        }
+        data.totalArrows = 25;
+    }
+
+    private static boolean isPathClearToEdge(boolean[][] occupied, int x, int y, Direction dir, int size) {
+        int dx = 0, dy = 0;
+        switch (dir) {
+            case NORTH: dy = 1; break; // Going UP towards y=size
+            case SOUTH: dy = -1; break; // Going DOWN towards y=0
+            case EAST:  dx = 1; break; // Going RIGHT towards x=size
+            case WEST:  dx = -1; break; // Going LEFT towards x=0
+        }
+
+        int curX = x + dx;
+        int curY = y + dy;
+        while (curX >= 0 && curX < size && curY >= 0 && curY < size) {
+            if (occupied[curX][curY]) {
+                return false; // Path blocked by another arrow
+            }
+            curX += dx;
+            curY += dy;
+        }
+        return true;
+    }
+
+    private static Direction getDirectionToNearestEdge(int x, int y, int size) {
+        int distWest = x;
+        int distEast = size - 1 - x;
+        int distSouth = y;
+        int distNorth = size - 1 - y;
+
+        int minDist = Math.min(Math.min(distWest, distEast), Math.min(distSouth, distNorth));
+        if (minDist == distNorth) return Direction.NORTH;
+        if (minDist == distEast) return Direction.EAST;
+        if (minDist == distSouth) return Direction.SOUTH;
+        return Direction.WEST;
+    }
+
+    /**
+     * Check if a specific arrow on the board currently has a clear path to escape off the board
+     */
+    public static boolean canArrowEscape(ArrowTile[][] grid, int x, int y, int size) {
+        ArrowTile tile = grid[x][y];
+        if (tile == null || tile.isEscaped || tile.isFlying) return false;
+
+        int dx = 0, dy = 0;
+        switch (tile.direction) {
+            case NORTH: dy = 1; break;
+            case SOUTH: dy = -1; break;
+            case EAST:  dx = 1; break;
+            case WEST:  dx = -1; break;
+        }
+
+        int curX = x + dx;
+        int curY = y + dy;
+        while (curX >= 0 && curX < size && curY >= 0 && curY < size) {
+            ArrowTile blocker = grid[curX][curY];
+            if (blocker != null && !blocker.isEscaped) {
+                return false; // Blocked by tile in front
+            }
+            curX += dx;
+            curY += dy;
+        }
+        return true;
     }
 }

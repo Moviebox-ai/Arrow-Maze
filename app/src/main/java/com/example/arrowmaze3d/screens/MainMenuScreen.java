@@ -24,22 +24,27 @@ public class MainMenuScreen extends BaseScreen {
         Label title = new Label("ARROW PUZZLE ESCAPE", skin, "title");
         Label subtitle = new Label("Solve the arrow puzzle to open the door", skin, "small");
 
-        TextButton playBtn = new TextButton("PLAY LEVEL 15", skin, "gold");
+        int currentLevel = game.getSaveManager().getSaveData().currentLevel;
+        if (currentLevel < 1) currentLevel = 1;
+        com.example.arrowmaze3d.level.PuzzleLevelGenerator.DifficultyMode mode = 
+            com.example.arrowmaze3d.level.PuzzleLevelGenerator.getDifficultyForLevel(currentLevel);
+
+        final int targetLevel = currentLevel;
+        TextButton playBtn = new TextButton("PLAY LEVEL " + currentLevel + "\n[" + mode.title + "]", skin, "gold");
         playBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 game.getAudio().playTrigger();
-                int currentLevel = game.getSaveManager().getSaveData().currentLevel;
-                game.getScreenManager().showArrowEscape(currentLevel > 0 ? currentLevel : 15);
+                game.getScreenManager().showArrowEscape(targetLevel);
             }
         });
 
-        TextButton continueBtn = new TextButton("SELECT LEVEL", skin, "default");
+        TextButton continueBtn = new TextButton("SELECT LEVEL (1 - 5000)", skin, "default");
         continueBtn.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
                 game.getAudio().playTrigger();
-                game.getScreenManager().showLevelSelect(1);
+                game.getScreenManager().showLevelSelect(targetLevel);
             }
         });
 
